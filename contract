@@ -1,0 +1,50 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
+import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
+
+contract ValuCoin is ERC20 {
+    address private owner;
+    address private uniswapRouterAddress;
+
+    IUniswapV2Router02 private uniswapRouter;
+
+    constructor(address _uniswapRouterAddress) ERC20("ValuCoin", "VALU") {
+        owner = msg.sender;
+        uniswapRouterAddress = _uniswapRouterAddress;
+        uniswapRouter = IUniswapV2Router02(_uniswapRouterAddress);
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "ValuCoin: Only owner can call this function.");
+        _;
+    }
+
+    function mint(uint256 amount) external onlyOwner {
+        _mint(owner, amount);
+    }
+
+    function swap(uint256 amount) external {
+        address[] memory path = new address[](2);
+        path[0] = address(this);
+        path[1] = uniswapRouter.WETH();
+
+        approve(uniswapRouterAddress, amount);
+
+        uniswapRouter.swapExactTokensForETH(
+            amount,
+            0,
+            path,
+            msg.sender,
+            block.timestamp + 1 days
+        );
+    }
+
+    function getUniswapPairAddress() external view returns (address) {
+        address factory = uniswapRouter.factory();
+        address pair = IUniswapV2Factory(factory).getPair(address(this), uniswapRouter.WETH());
+        return pair;
+    }
+}
