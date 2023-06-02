@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
 import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
+import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
 
 contract ValuCoin is ERC20 {
     address private owner;
@@ -14,7 +15,8 @@ contract ValuCoin is ERC20 {
     constructor(address _uniswapRouterAddress) ERC20("ValuCoin", "VALU") {
         owner = msg.sender;
         uniswapRouterAddress = _uniswapRouterAddress;
-        uniswapRouter = IUniswapV2Router02(_uniswapRouterAddress);
+        uniswapRouter = IUniswapV2Router02(uniswapRouterAddress);
+        _mint(msg.sender, 50000000 * 10 ** decimals());
     }
 
     modifier onlyOwner() {
@@ -22,8 +24,9 @@ contract ValuCoin is ERC20 {
         _;
     }
 
-    function mint(uint256 amount) external onlyOwner {
-        _mint(owner, amount);
+    function setOwner(address _newOwner) external onlyOwner {
+        require(_newOwner != address(0), "ValuCoin: Invalid owner address.");
+        owner = _newOwner;
     }
 
     function swap(uint256 amount) external {
